@@ -1,4 +1,4 @@
-# flutterappexpense
+# flutter app personal expense
 
 A new Flutter application.
 
