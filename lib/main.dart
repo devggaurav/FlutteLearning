@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutterappexpense/widgets/chart.dart';
 import './transaction.dart';
 import 'package:intl/intl.dart';
 import './widgets/transaction_list.dart';
@@ -13,24 +14,32 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Personal Expenses',
-
       theme: ThemeData(
+          primarySwatch: Colors.green,
+          accentColor: Colors.amber,
+          errorColor: Colors.red,
+          fontFamily: 'Quicksand',
+          textTheme: ThemeData.light().textTheme.copyWith(
+              title: TextStyle(
+                  fontFamily: 'Opensans',
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18),
+            button: TextStyle(color: Colors.white)
+          ),
 
-        primarySwatch: Colors.grey,
-        accentColor: Colors.amber,
-        fontFamily: 'Quicksand',
-        textTheme: ThemeData.light().textTheme.copyWith(title: TextStyle(fontFamily: 'Opensans',fontWeight: FontWeight.bold,fontSize: 18)),
-        appBarTheme: AppBarTheme(textTheme: ThemeData.light().textTheme.copyWith(title: TextStyle(fontFamily: 'OpenSans',fontSize: 20,fontWeight: FontWeight.bold)))
-      ),
+          appBarTheme: AppBarTheme(
+              textTheme: ThemeData.light().textTheme.copyWith(
+                  title: TextStyle(
+                      fontFamily: 'OpenSans',
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold)))),
       home: MyHomePage(),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-
-  
- /* String titleInput;
+  /* String titleInput;
   String amountInput;*/
   @override
   _MyHomePageState createState() => _MyHomePageState();
@@ -41,20 +50,26 @@ class _MyHomePageState extends State<MyHomePage> {
 
   final amountController = TextEditingController();
 
-
-
   final List<Transaction> userTransaction = [
-   /* Transaction(
+    /* Transaction(
         id: 't1', title: 'My shoes', amount: 68.99, date: DateTime.now()),
     Transaction(
         id: 't2', title: 'My TShirt', amount: 78.99, date: DateTime.now())*/
   ];
 
-  void addNewTransaction(String txTitle, double txAmout) {
+  List<Transaction> get recentTransaction {
+    return userTransaction.where((tx) {
+      return tx.date.isAfter(DateTime.now().subtract(
+        Duration(days: 7),
+      ));
+    }).toList();
+  }
+
+  void addNewTransaction(String txTitle, double txAmout,DateTime selectedDate) {
     final newTx = Transaction(
         title: txTitle,
         amount: txAmout,
-        date: DateTime.now(),
+        date: selectedDate,
         id: DateTime.now().toString());
 
     setState(() {
@@ -62,15 +77,24 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-
-  void startAddNewTransaction(BuildContext ctx){
-    showModalBottomSheet(context: ctx, builder:(_){
-      return GestureDetector(
-        child:NewTransaction(addNewTransaction),
-        onTap: (){},
-        behavior: HitTestBehavior.opaque,
-      );
+  void deleteTransaction(String id){
+    setState(() {
+      userTransaction.removeWhere((tx){
+        return tx.id == id;
+      });
     });
+  }
+
+  void startAddNewTransaction(BuildContext ctx) {
+    showModalBottomSheet(
+        context: ctx,
+        builder: (_) {
+          return GestureDetector(
+            child: NewTransaction(addNewTransaction),
+            onTap: () {},
+            behavior: HitTestBehavior.opaque,
+          );
+        });
   }
 
   @override
@@ -79,7 +103,12 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         title: Text('Personal Expense'),
         actions: <Widget>[
-          IconButton(icon: Icon(Icons.add,),onPressed: () => startAddNewTransaction(context),)
+          IconButton(
+            icon: Icon(
+              Icons.add,
+            ),
+            onPressed: () => startAddNewTransaction(context),
+          )
         ],
       ),
       body: SingleChildScrollView(
@@ -87,21 +116,16 @@ class _MyHomePageState extends State<MyHomePage> {
           // mainAxisAlignment: MainAxisAlignment.spaceAround,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
-            Container(
-              width: double.infinity,
-              child: Card(
-                color: Colors.blue,
-                child: Text('CHART!'),
-                elevation: 5,
-              ),
-            ),
-               TransactionList(userTransaction)
+            Chart(recentTransaction),
+            TransactionList(userTransaction,deleteTransaction)
           ],
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: FloatingActionButton(child: Icon(Icons.add),
-      onPressed: () => startAddNewTransaction(context),),
+      floatingActionButton: FloatingActionButton(
+        child: Icon(Icons.add),
+        onPressed: () => startAddNewTransaction(context),
+      ),
     );
   }
 }
